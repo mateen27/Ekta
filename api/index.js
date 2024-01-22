@@ -13,7 +13,7 @@ const cors = require("cors");
 app.use(cors());
 
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
+app.use(bodyParser.json()); // Adjust the limit as needed
 app.use(passport.initialize());
 
 const jwt = require("jsonwebtoken");

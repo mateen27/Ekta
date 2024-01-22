@@ -18,6 +18,7 @@ import { Ionicons } from "@expo/vector-icons";
 import EmojiSelector from "react-native-emoji-selector";
 import { UserType } from "../context/userContext";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import * as ImagePicker from "expo-image-picker";
 
 const ChatMessageScreen = () => {
   // state management
@@ -28,9 +29,9 @@ const ChatMessageScreen = () => {
   const [recepientData, setRecepientData] = useState();
   const [loading, setLoading] = useState(true);
   // for holding the chat messages data
-  const [messages , setMessages] = useState([]);
+  const [messages, setMessages] = useState([]);
 
-    const [messageState, setMessageState] = useState("");
+  const [messageState, setMessageState] = useState("");
 
   //   navigation
   const navigation = useNavigation();
@@ -45,6 +46,22 @@ const ChatMessageScreen = () => {
   // function to select and unselect [open and close the emoji selector options!]
   const handleEmojiPress = () => {
     setShowEmojiSelector(!showEmojiSelector);
+  };
+
+  // function to pick Image from the Gallery
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    console.log(result.assets[0].uri);
+
+    if (!result.canceled) {
+      handleSend("image" , result.assets[0].uri)
+    }
   };
 
   const fetchRecepientData = async () => {
@@ -68,21 +85,23 @@ const ChatMessageScreen = () => {
   // function for fetching the messages from the api
   const fetchMessages = async () => {
     try {
-      const response = await fetch(`http://192.168.29.181:5000/user/messages/${userId}/${recepientId}`);
+      const response = await fetch(
+        `http://192.168.29.181:5000/user/messages/${userId}/${recepientId}`
+      );
 
       const data = await response.json();
 
       // console.log('data' , data)
 
-      if(response.ok) {
-        setMessages(data); 
+      if (response.ok) {
+        setMessages(data);
       } else {
-        console.log('error showing messages' , response.status.message); 
+        console.log("error showing messages", response.status.message);
       }
     } catch (error) {
-      console.log('error fetching messages!' , error);
+      console.log("error fetching messages!", error);
     }
-  }
+  };
 
   useEffect(() => {
     fetchRecepientData();
@@ -160,20 +179,60 @@ const ChatMessageScreen = () => {
 
   // function to format Time
   const formatTime = (time) => {
-    const options = { hour : "numeric" , minute : "numeric" }
-    return new Date(time).toLocaleString("en-US",options)
-  }
+    const options = { hour: "numeric", minute: "numeric" };
+    return new Date(time).toLocaleString("en-US", options);
+  };
 
   return (
     <KeyboardAvoidingView style={styles.container}>
       <ScrollView>
         {/* all the chats messages goes over here! */}
-        {messages.map((item , index) => {
-          if(item.messageType === 'text') {
+        {messages.map((item, index) => {
+          // for the text
+          if (item.messageType === "text") {
             return (
-              <Pressable key={index} style = { [ item?.senderId?._id === userId ? styles.senderMessageStyle : styles.receiverMessageStyle ] }>
-                <Text style = { styles.textMessageStyle }>{item?.message}</Text>
-                <Text style = { styles.timeTextStyle }>{formatTime(item?.timeStamp)}</Text>
+              <Pressable
+                key={index}
+                style={[
+                  item?.senderId?._id === userId
+                    ? styles.senderMessageStyle
+                    : styles.receiverMessageStyle,
+                ]}
+              >
+                <Text style={styles.textMessageStyle}>{item?.message}</Text>
+                <Text style={styles.timeTextStyle}>
+                  {formatTime(item?.timeStamp)}
+                </Text>
+              </Pressable>
+            );
+          }
+
+          // for the image
+          if ( item.messageType === "image" ) {
+            // const baseURL = require('../api/files/');
+            const imageUrl = item?.imageUrl;
+            // console.log('imageurl' , imageUrl);
+            // Replace backslashes with forward slashes
+            const normalizedImageUrl = imageUrl.replace(/\\/g, "/");
+            // console.log(normalizedImageUrl);
+            const fileName = normalizedImageUrl.split("/").pop();
+            // console.log(`file:///D:/NativeProjects/ekta/api/files/${fileName}`);
+            const source =  `file:///D:/NativeProjects/ekta/api/files/${fileName}` ; // Adjust the path accordingly
+
+            return (
+              <Pressable key={index}
+              style={[
+                item?.senderId?._id === userId
+                  ? styles.senderMessageStyle
+                  : styles.receiverMessageStyle,
+              ]}>
+                <View>
+                  <Image source={{ uri : source}}
+  style={{ width: 200, height: 200, borderRadius: 7 }}
+  onError={(error) => console.error("Image load error:", error)}/>
+
+                  <Text style={styles.timeTextStyle}>{formatTime(item?.timeStamp)}</Text>
+                </View>
               </Pressable>
             )
           }
@@ -200,7 +259,12 @@ const ChatMessageScreen = () => {
         />
 
         {/* for the icon of camera and send button*/}
-        <Feather name="camera" size={24} color="#f1f1f1f1" />
+        <Feather
+          onPress={pickImage}
+          name="camera"
+          size={24}
+          color="#f1f1f1f1"
+        />
 
         <Feather name="mic" size={24} color="#f1f1f1f1" />
 
@@ -273,30 +337,43 @@ const styles = StyleSheet.create({
     marginLeft: 15,
     fontWeight: "900",
   },
-  senderMessageStyle : {
-    alignSelf : 'flex-end' , 
-    backgroundColor : '#39B68D' , 
-    padding : 8 , 
-    maxWidth : '70%' , 
-    borderRadius : 8 , 
-    margin : 5
-  } , 
-  receiverMessageStyle : {
-    alignSelf : 'flex-start' , 
-    backgroundColor : '#39B68D' , 
-    padding : 8 , 
-    margin : 5 , 
-    borderRadius : 7 , 
-    maxWidth : '60%'
-  } , 
+  senderMessageStyle: {
+    alignSelf: "flex-end",
+    backgroundColor: "#39B68D",
+    padding: 8,
+    maxWidth: "70%",
+    borderRadius: 8,
+    margin: 5,
+  },
+  receiverMessageStyle: {
+    alignSelf: "flex-start",
+    backgroundColor: "#39B68D",
+    padding: 8,
+    margin: 5,
+    borderRadius: 7,
+    maxWidth: "70%",
+  },
   textMessageStyle: {
-    fontSize : 17 , 
-    color : '#fff' , 
-    textAlign : "left"
-  } , 
-  timeTextStyle : {
-    textAlign : 'right' , 
-    fontSize : 11 , 
-    color : 'black' ,
-  }
+    fontSize: 17,
+    color: "#fff",
+    textAlign: "left",
+  },
+  timeTextStyle: {
+    textAlign: "right",
+    fontSize: 11,
+    color: "black",
+    // position : 'absolute' , 
+    // right : 1 , 
+    // bottom : 1 ,
+    // marginTop : 5
+  },
+  imageTimeStyle: {
+    textAlign: "right",
+    fontSize: 11,
+    color: "black",
+    // position : 'absolute' , 
+    // right : 1 , 
+    // bottom : 1 ,
+    // marginTop : 5
+  },
 });

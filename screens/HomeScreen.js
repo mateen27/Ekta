@@ -68,6 +68,7 @@ const HomeScreen = () => {
       } catch (error) {
         // handling the errors!
         console.error("Error fetching users:", error);
+        navigation.replace('Login');
       }
     };
 

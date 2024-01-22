@@ -153,6 +153,7 @@ const sendMessage = async (req, res) => {
   try {
     const { senderId, recepientId, messageType, messageText } = req.body;
     await userService.sendMessage(
+      req, // Pass req object
       senderId,
       recepientId,
       messageType,

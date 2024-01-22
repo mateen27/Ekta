@@ -32,9 +32,12 @@ router.get('/friends/:userId' , showAllFriends);
 // configure multer for handling file uploads!
 const storage = multer.diskStorage({
   destination : function ( req , file , cb) {
+    cb(null , 'files'); // specify the desired destination folder
+  },
+  filename : function (req , file , cb) {
     // Generate a unique fileName for the uploaded file!
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null , uniqueSuffix , + '-' + file.originalname);
+    cb(null , uniqueSuffix + '-' + file.originalname);
   },
 })
 

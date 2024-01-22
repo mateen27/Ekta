@@ -129,7 +129,7 @@ const listOfFriends = async (userId) => {
 };
 
 // function to send Message
-const sendMessage = async (senderId, recepientId, messageType, messageText) => {
+const sendMessage = async (req, senderId, recepientId, messageType, messageText) => {
   try {
     const newMessage = new Message({
       senderId: senderId,
@@ -137,7 +137,7 @@ const sendMessage = async (senderId, recepientId, messageType, messageText) => {
       messageType: messageType,
       message: messageText,
       timeStamp: new Date(),
-      imageUrl: messageType === "image",
+      imageUrl: messageType === "image" ? req.file.path : null,
     });
 
     return await newMessage.save(); // Save the newMessage to the database
