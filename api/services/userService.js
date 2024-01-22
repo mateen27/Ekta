@@ -162,7 +162,7 @@ const getUserDetailsService = async (userId) => {
 // endpoint to fetch the messages between two users in the chatRoom!
 const fetchChatsService = async (senderId, recepientId) => {
   try {
-    const messages = await Message.findOne({
+    const messages = await Message.find({
       $or: [
         { senderId: senderId, recipientId: recepientId },
         { senderId: recepientId, recipientId: senderId },

@@ -7,8 +7,9 @@ import {
   TextInput,
   TouchableOpacity,
   Image,
+  Pressable,
 } from "react-native";
-import React, { useContext, useLayoutEffect, useState } from "react";
+import React, { useContext, useEffect, useLayoutEffect, useState } from "react";
 // icons
 import { Entypo } from "@expo/vector-icons";
 import { Feather } from "@expo/vector-icons";
@@ -23,8 +24,13 @@ const ChatMessageScreen = () => {
   const [showEmojiSelector, setShowEmojiSelector] = useState(false);
   const [messageText, setMessageText] = useState("");
   const [selectedImage, setSelectedImage] = useState("");
+  // for holding recepient Data from api call
+  const [recepientData, setRecepientData] = useState();
+  const [loading, setLoading] = useState(true);
+  // for holding the chat messages data
+  const [messages , setMessages] = useState([]);
 
-  //   const [messageState, setMessageState] = useState("");
+    const [messageState, setMessageState] = useState("");
 
   //   navigation
   const navigation = useNavigation();
@@ -40,6 +46,73 @@ const ChatMessageScreen = () => {
   const handleEmojiPress = () => {
     setShowEmojiSelector(!showEmojiSelector);
   };
+
+  const fetchRecepientData = async () => {
+    try {
+      const response = await fetch(
+        `http://192.168.29.181:5000/user/details/${recepientId}`
+      );
+      const data = await response.json();
+      if (data) {
+        setRecepientData(data);
+      } else {
+        console.log("no data in recepient");
+      }
+    } catch (error) {
+      console.log("error retrieving details", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // function for fetching the messages from the api
+  const fetchMessages = async () => {
+    try {
+      const response = await fetch(`http://192.168.29.181:5000/user/messages/${userId}/${recepientId}`);
+
+      const data = await response.json();
+
+      // console.log('data' , data)
+
+      if(response.ok) {
+        setMessages(data); 
+      } else {
+        console.log('error showing messages' , response.status.message); 
+      }
+    } catch (error) {
+      console.log('error fetching messages!' , error);
+    }
+  }
+
+  useEffect(() => {
+    fetchRecepientData();
+    fetchMessages();
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!loading) {
+      navigation.setOptions({
+        headerTitle: "",
+        headerLeft: () => (
+          <View style={styles.headerContainer}>
+            <Ionicons
+              onPress={() => navigation.goBack()}
+              name="arrow-back"
+              size={24}
+              color="#f1f1f1"
+            />
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <Image
+                style={styles.imageStyle}
+                source={{ uri: recepientData?.image }}
+              />
+              <Text style={styles.textStyle}>{recepientData?.name}</Text>
+            </View>
+          </View>
+        ),
+      });
+    }
+  }, [navigation, recepientData, loading]);
 
   // function to send message
   const handleSend = async (messageType, imageUri) => {
@@ -71,30 +144,41 @@ const ChatMessageScreen = () => {
       if (response.ok) {
         setMessageText("");
         setSelectedImage("");
+
+        // call the api to fetch the messages from the backend
+        fetchMessages();
       }
     } catch (error) {
       console.log("error in sending the message!", error);
     }
   };
 
-  // designing the header of the screen!
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerTitle: "",
-      headerLeft: () => (
-        <View>
-          <Ionicons name="arrow-back" size={24} color="#f1f1f1" />
+  // for recepient data
+  // console.log("recepient data from api call", recepientData);
+  // for message
+  // console.log('messages' , messages);
 
-        {/* Image of the user */}
-          <Image source={{ uri : }}/>
-        </View>
-      ),
-    });
-  }, []);
+  // function to format Time
+  const formatTime = (time) => {
+    const options = { hour : "numeric" , minute : "numeric" }
+    return new Date(time).toLocaleString("en-US",options)
+  }
 
   return (
     <KeyboardAvoidingView style={styles.container}>
-      <ScrollView>{/* all the chats messages goes over here! */}</ScrollView>
+      <ScrollView>
+        {/* all the chats messages goes over here! */}
+        {messages.map((item , index) => {
+          if(item.messageType === 'text') {
+            return (
+              <Pressable key={index} style = { [ item?.senderId?._id === userId ? styles.senderMessageStyle : styles.receiverMessageStyle ] }>
+                <Text style = { styles.textMessageStyle }>{item?.message}</Text>
+                <Text style = { styles.timeTextStyle }>{formatTime(item?.timeStamp)}</Text>
+              </Pressable>
+            )
+          }
+        })}
+      </ScrollView>
 
       {/* for the emojis , textField and the sendButton */}
       <View style={styles.textContainer}>
@@ -172,4 +256,47 @@ const styles = StyleSheet.create({
   emojiStyle: {
     height: 350,
   },
+  imageStyle: {
+    height: 40,
+    width: 40,
+    borderRadius: 20,
+    resizeMode: "cover",
+  },
+  headerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  textStyle: {
+    fontSize: 15,
+    color: "#f1f1f1",
+    marginLeft: 15,
+    fontWeight: "900",
+  },
+  senderMessageStyle : {
+    alignSelf : 'flex-end' , 
+    backgroundColor : '#39B68D' , 
+    padding : 8 , 
+    maxWidth : '70%' , 
+    borderRadius : 8 , 
+    margin : 5
+  } , 
+  receiverMessageStyle : {
+    alignSelf : 'flex-start' , 
+    backgroundColor : '#39B68D' , 
+    padding : 8 , 
+    margin : 5 , 
+    borderRadius : 7 , 
+    maxWidth : '60%'
+  } , 
+  textMessageStyle: {
+    fontSize : 17 , 
+    color : '#fff' , 
+    textAlign : "left"
+  } , 
+  timeTextStyle : {
+    textAlign : 'right' , 
+    fontSize : 11 , 
+    color : 'black' ,
+  }
 });
