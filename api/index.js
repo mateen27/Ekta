@@ -9,6 +9,7 @@ const localStrategy = require("passport-local").Strategy;
 const userRoutes = require("./routes/userRoutes");
 
 const app = express();
+app.use(express.json());
 const cors = require("cors");
 app.use(cors());
 

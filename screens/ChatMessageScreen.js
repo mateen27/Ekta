@@ -50,17 +50,69 @@ const ChatMessageScreen = () => {
 
   // function to pick Image from the Gallery
   const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
+    try {
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.All,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
 
-    console.log(result.assets[0].uri);
+      if (!result.canceled) {
+        // Upload the image to Cloudinary
+        const cloudinaryLink = await uploadImageToCloudinary(
+          result.assets[0].uri
+        );
 
-    if (!result.canceled) {
-      handleSend("image" , result.assets[0].uri)
+        // Send the Cloudinary link through handleSend
+        if (cloudinaryLink) {
+          handleSend("image", cloudinaryLink);
+        } else {
+          console.log("Error in getting the cloudinary link");
+        }
+      }
+    } catch (error) {
+      console.error("Error picking image: ", error);
+    }
+  };
+
+  const uploadImageToCloudinary = async (imageUri) => {
+    try {
+      const data = new FormData();
+      data.append("file", {
+        uri: imageUri,
+        type: `image/${imageUri.split(".").pop()}`,
+        name: `test.${imageUri.split(".").pop()}`,
+      });
+      data.append("upload_preset", "ShowStarter");
+
+      const response = await fetch(
+        "https://api.cloudinary.com/v1_1/dvvnup3nh/image/upload",
+        {
+          method: "post",
+          body: data,
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        const cloudinaryData = await response.json();
+        if (cloudinaryData.secure_url) {
+          console.log(
+            "Image uploaded to Cloudinary: ",
+            cloudinaryData.secure_url
+          );
+          return cloudinaryData.secure_url;
+        }
+      }
+
+      console.log("Image upload to Cloudinary failed");
+      return null;
+    } catch (error) {
+      console.error("Error uploading to Cloudinary: ", error);
+      return null;
     }
   };
 
@@ -134,41 +186,87 @@ const ChatMessageScreen = () => {
   }, [navigation, recepientData, loading]);
 
   // function to send message
+  // const handleSend = async (messageType, imageUri) => {
+  //   try {
+  //     const formData = new FormData();
+  //     // user id
+  //     formData.append("senderId", userId);
+  //     // recepient id
+  //     formData.append("recipientId", recepientId);
+
+  //     console.log("userId:", userId);
+  //     console.log("recipientId:", recepientId);
+  //     console.log("messageType:", messageType);
+
+  //     // if the message type id image or normal text
+  //     if (messageType === "image") {
+  //       formData.append("messageType", "image");
+  //       // Assuming 'imageUri' is the result from ImagePicker
+  //     const imageFile = {
+  //       uri: imageUri,
+  //       name: "image.jpg",
+  //       type: "image/jpeg",
+  //     };
+
+  //     formData.append("imageFile", imageFile.uri);
+  //     } else {
+  //       formData.append("messageType", "text");
+  //       formData.append("messageText", messageText);
+  //     }
+
+  //     const response = await fetch("http://192.168.29.181:5000/user/messages", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "multipart/form-data",
+  //       },
+  //       body: formData,
+  //     });
+
+  //     console.log("formData", formData);
+
+  //     if (response.ok) {
+  //       setMessageText("");
+  //       setSelectedImage("");
+
+  //       // call the api to fetch the messages from the backend
+  //       // fetchMessages();
+  //     }
+  //   } catch (error) {
+  //     console.log("error in sending the message!", error);
+  //   }
+  // };
   const handleSend = async (messageType, imageUri) => {
     try {
-      const formData = new FormData();
-      // user id
-      formData.append("senderId", userId);
-      // recepient id
-      formData.append("recepientId", recepientId);
+      const data = {
+        senderId: userId,
+        recipientId: recepientId,
+        messageType: messageType,
+        messageText: messageType === "text" ? messageText : null,
+        imageUrl: messageType === "image" ? imageUri : null,
+      };
 
-      // if the message type id image or normal text
-      if (messageType === "image") {
-        formData.append("messageType", "image");
-        formData.append("imageFile", {
-          uri: imageUri,
-          name: "image.jpg",
-          type: "image/jpeg",
-        });
-      } else {
-        formData.append("messageType", "text");
-        formData.append("messageText", messageText);
-      }
+      console.log("data", JSON.stringify(data));
+
+      //       console.log("userId:", userId);
+      // console.log("recipientId:", recepientId);
+      // console.log("messageType:", messageType);
 
       const response = await fetch("http://192.168.29.181:5000/user/messages", {
         method: "POST",
-        body: formData,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
       });
 
       if (response.ok) {
         setMessageText("");
         setSelectedImage("");
-
-        // call the api to fetch the messages from the backend
+        // call the API to fetch the messages from the backend
         fetchMessages();
       }
     } catch (error) {
-      console.log("error in sending the message!", error);
+      console.log("Error in sending the message!", error);
     }
   };
 
@@ -207,34 +305,34 @@ const ChatMessageScreen = () => {
             );
           }
 
-          // for the image
-          if ( item.messageType === "image" ) {
-            // const baseURL = require('../api/files/');
-            const imageUrl = item?.imageUrl;
-            // console.log('imageurl' , imageUrl);
-            // Replace backslashes with forward slashes
-            const normalizedImageUrl = imageUrl.replace(/\\/g, "/");
-            // console.log(normalizedImageUrl);
-            const fileName = normalizedImageUrl.split("/").pop();
-            // console.log(`file:///D:/NativeProjects/ekta/api/files/${fileName}`);
-            const source =  `file:///D:/NativeProjects/ekta/api/files/${fileName}` ; // Adjust the path accordingly
-
+          // // for the image
+          const source = item?.imageUrl;
+          if (item.messageType === "image") {
             return (
-              <Pressable key={index}
-              style={[
-                item?.senderId?._id === userId
-                  ? styles.senderMessageStyle
-                  : styles.receiverMessageStyle,
-              ]}>
+              <Pressable
+                key={index}
+                style={[
+                  item?.senderId?._id === userId
+                    ? styles.senderMessageStyle
+                    : styles.receiverMessageStyle,
+                ]}
+              >
                 <View>
-                  <Image source={{ uri : source}}
-  style={{ width: 200, height: 200, borderRadius: 7 }}
-  onError={(error) => console.error("Image load error:", error)}/>
+                  <Image
+                    source={{ uri: source }}
+                    style={{ width: 200, height: 200, borderRadius: 7 }}
+                    resizeMode="contain"
+                    onError={(error) =>
+                      console.error("Image load error:", error)
+                    }
+                  />
 
-                  <Text style={styles.timeTextStyle}>{formatTime(item?.timeStamp)}</Text>
+                  <Text style={styles.timeTextStyle}>
+                    {formatTime(item?.timeStamp)}
+                  </Text>
                 </View>
               </Pressable>
-            )
+            );
           }
         })}
       </ScrollView>
@@ -362,8 +460,8 @@ const styles = StyleSheet.create({
     textAlign: "right",
     fontSize: 11,
     color: "black",
-    // position : 'absolute' , 
-    // right : 1 , 
+    // position : 'absolute' ,
+    // right : 1 ,
     // bottom : 1 ,
     // marginTop : 5
   },
@@ -371,8 +469,8 @@ const styles = StyleSheet.create({
     textAlign: "right",
     fontSize: 11,
     color: "black",
-    // position : 'absolute' , 
-    // right : 1 , 
+    // position : 'absolute' ,
+    // right : 1 ,
     // bottom : 1 ,
     // marginTop : 5
   },

@@ -11,7 +11,6 @@ const {
   getUserDetails,
   fetchChats,
 } = require("../controllers/userController");
-const multer = require("multer");
 const router = express.Router();
 
 // endpoint for registering the users
@@ -28,22 +27,8 @@ router.get("/friend-request/:userId", showAllFriendRequests);
 router.post('/friend-request/accept' , acceptFriendRequest);
 // endpoint to display all the friends of the loggedin user!
 router.get('/friends/:userId' , showAllFriends);
-
-// configure multer for handling file uploads!
-const storage = multer.diskStorage({
-  destination : function ( req , file , cb) {
-    cb(null , 'files'); // specify the desired destination folder
-  },
-  filename : function (req , file , cb) {
-    // Generate a unique fileName for the uploaded file!
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null , uniqueSuffix + '-' + file.originalname);
-  },
-})
-
 // endpoint to send message to a person
-const upload = multer({ storage : storage }); 
-router.post('/messages' , upload.single("imageFile") , sendMessage);
+router.post('/messages' , sendMessage);
 // endpoint to get the userDetails to design the chatRoom Header!
 router.get('/details/:userId' , getUserDetails);
 // endpoint to fetch the messages between two users in the chatRoom!

@@ -1,4 +1,3 @@
-const multer = require("multer");
 const userService = require("../services/userService");
 
 // logic for registering the User into the backend i.e. the database!
@@ -151,13 +150,16 @@ const showAllFriends = async (req, res) => {
 // function to send message to a person!
 const sendMessage = async (req, res) => {
   try {
-    const { senderId, recepientId, messageType, messageText } = req.body;
+    const { senderId, recipientId, messageType, messageText, imageUrl } = req.body;
+
+    console.log('userID' , senderId);
+    console.log('recepientId', recipientId);
     await userService.sendMessage(
-      req, // Pass req object
       senderId,
-      recepientId,
+      recipientId,
       messageType,
-      messageText
+      messageText,
+      imageUrl
     );
 
     res

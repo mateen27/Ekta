@@ -129,15 +129,21 @@ const listOfFriends = async (userId) => {
 };
 
 // function to send Message
-const sendMessage = async (req, senderId, recepientId, messageType, messageText) => {
+const sendMessage = async (
+  senderId,
+  recipientId,
+  messageType,
+  messageText,
+  imageUrl
+) => {
   try {
     const newMessage = new Message({
-      senderId: senderId,
-      recipientId: recepientId,
-      messageType: messageType,
+      senderId,
+      recipientId,
+      messageType,
       message: messageText,
       timeStamp: new Date(),
-      imageUrl: messageType === "image" ? req.file.path : null,
+      imageUrl,
     });
 
     return await newMessage.save(); // Save the newMessage to the database
@@ -146,6 +152,9 @@ const sendMessage = async (req, senderId, recepientId, messageType, messageText)
     console.error("Error sending message:", error);
     throw error;
   }
+
+  // console.log('userID',userId);
+  // console.log('recepient ID',recepientId);
 };
 
 // function to fetch the userDetails by the userId
