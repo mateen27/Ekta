@@ -15,6 +15,7 @@ import { Entypo } from "@expo/vector-icons";
 import { Feather } from "@expo/vector-icons";
 import { FontAwesome } from "@expo/vector-icons";
 import { Ionicons } from "@expo/vector-icons";
+import { MaterialIcons } from "@expo/vector-icons";
 import EmojiSelector from "react-native-emoji-selector";
 import { UserType } from "../context/userContext";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -173,18 +174,71 @@ const ChatMessageScreen = () => {
               size={24}
               color="#f1f1f1"
             />
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <Image
-                style={styles.imageStyle}
-                source={{ uri: recepientData?.image }}
-              />
-              <Text style={styles.textStyle}>{recepientData?.name}</Text>
-            </View>
+
+            {selectedMessages.length > 0 ? (
+              <View>
+                <Text
+                  style={{ fontSize: 18, fontWeight: "500", color: "#f1f1f1" }}
+                >
+                  {selectedMessages.length}
+                </Text>
+              </View>
+            ) : (
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Image
+                  style={styles.imageStyle}
+                  source={{ uri: recepientData?.image }}
+                />
+                <Text style={styles.textStyle}>{recepientData?.name}</Text>
+              </View>
+            )}
           </View>
         ),
+        headerRight: () =>
+          selectedMessages.length > 0 ? (
+            <View style={styles.headerRightContainer}>
+              <Ionicons name="arrow-redo-sharp" size={24} color="#f1f1f1" />
+              <Ionicons name="arrow-undo" size={24} color="#f1f1f1" />
+              <FontAwesome name="star" size={24} color="#f1f1f1" />
+              <MaterialIcons
+                onPress={() => deleteMessages(selectedMessages)}
+                name="delete"
+                size={24}
+                color="#f1f1f1"
+              />
+            </View>
+          ) : null,
       });
     }
-  }, [navigation, recepientData, loading]);
+  }, [navigation, recepientData, loading, selectedMessages]);
+
+  // funcrion to delete Messages
+  const deleteMessages = async (messageIds) => {
+    try {
+      const resposne = await fetch(
+        "http://192.168.29.181:5000/user/deleteMessages",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ messages: messageIds }),
+        }
+      );
+
+      if (resposne.ok) {
+        setSelectedMessages((previousMessages) =>
+          previousMessages.filter((id) => !messageIds.includes(id))
+        );
+
+        fetchMessages();
+      } else {
+        console.log("error deleting messages", resposne.status);
+      }
+    } catch (error) {
+      console.log("error in deleting Messages", error);
+    }
+  };
 
   // function to send message
   const handleSend = async (messageType, imageUri) => {
@@ -253,7 +307,7 @@ const ChatMessageScreen = () => {
     }
   };
 
-  console.log('messages', selectedMessages);
+  console.log("messages", selectedMessages);
 
   return (
     <KeyboardAvoidingView style={styles.container}>
@@ -262,6 +316,7 @@ const ChatMessageScreen = () => {
         {messages.map((item, index) => {
           // for the text
           if (item.messageType === "text") {
+            const isSelected = selectedMessages.includes(item._id);
             return (
               <Pressable
                 key={index}
@@ -269,11 +324,31 @@ const ChatMessageScreen = () => {
                 style={[
                   item?.senderId?._id === userId
                     ? styles.senderMessageStyle
-                    : styles.receiverMessageStyle,
+                    : [
+                        styles.receiverMessageStyle,
+                        isSelected ? styles.selectedReceiverMessageStyle : {},
+                      ],
+                  ,
+                  // styles while deleting the message
+                  isSelected && styles.selectedMessageStyle,
                 ]}
               >
-                <Text style={styles.textMessageStyle}>{item?.message}</Text>
-                <Text style={styles.timeTextStyle}>
+                <Text
+                  style={[
+                    styles.textMessageStyle,
+                    isSelected ? { textAlign: "right" } : { textAlign: "left" },
+                  ]}
+                >
+                  {item?.message}
+                </Text>
+                <Text
+                  style={[
+                    styles.timeTextStyle,
+                    isSelected
+                      ? { color: "#f2f2f2", fontSize: 9 }
+                      : { color: "#333" },
+                  ]}
+                >
                   {formatTime(item?.timeStamp)}
                 </Text>
               </Pressable>
@@ -305,7 +380,7 @@ const ChatMessageScreen = () => {
                   <Text
                     style={{
                       position: "absolute",
-                      color: "#333",
+                      color: "white",
                       fontSize: 11,
                       right: 3,
                       bottom: 0,
@@ -436,6 +511,11 @@ const styles = StyleSheet.create({
     borderRadius: 7,
     maxWidth: "70%",
   },
+  // selectedReceiverMessageStyle: {
+  //   // Styles to apply when the receiver's message is selected
+  //   alignItems : 'flex-start' ,
+  //   // textAlign : 'left'// Adjust alignment to left when selected
+  // },
   textMessageStyle: {
     fontSize: 17,
     color: "#fff",
@@ -459,5 +539,15 @@ const styles = StyleSheet.create({
     // right : 1 ,
     // bottom : 1 ,
     // marginTop : 5
+  },
+  headerRightContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 18,
+  },
+  selectedMessageStyle: {
+    width: "auto",
+    backgroundColor: "#2d8f6f",
+    opacity: 0.6,
   },
 });

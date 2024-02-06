@@ -189,11 +189,8 @@ const fetchChatsService = async (senderId, recepientId) => {
 // endpoint to delete the messages between two users in the chatRoom
 const deleteMessages = async (messages) => {
   try {
-    // Assuming each message in the 'messages' array has a unique ID
-    const messageIds = messages.map((message) => message._id);
-
     // Delete messages with the specified IDs
-    const result = await Message.deleteMany({ _id: { $in: messageIds } });
+    const result = await Message.deleteMany({ _id: { $in: messages } });
 
     if (result.deletedCount > 0) {
       // Some messages were deleted successfully

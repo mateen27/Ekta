@@ -10,6 +10,7 @@ const {
   sendMessage,
   getUserDetails,
   fetchChats,
+  deleteMessage,
 } = require("../controllers/userController");
 const router = express.Router();
 
@@ -34,7 +35,7 @@ router.get('/details/:userId' , getUserDetails);
 // endpoint to fetch the messages between two users in the chatRoom!
 router.get('/messages/:senderId/:recepientId' , fetchChats);
 // endpoint to delete Message from the chatRoom
-// router.post("/deleteMessages", deleteMessage);
+router.post("/deleteMessages", deleteMessage);
 
 
 module.exports = router;
