@@ -186,6 +186,28 @@ const fetchChatsService = async (senderId, recepientId) => {
   }
 };
 
+// endpoint to delete the messages between two users in the chatRoom
+const deleteMessages = async (messages) => {
+  try {
+    // Assuming each message in the 'messages' array has a unique ID
+    const messageIds = messages.map((message) => message._id);
+
+    // Delete messages with the specified IDs
+    const result = await Message.deleteMany({ _id: { $in: messageIds } });
+
+    if (result.deletedCount > 0) {
+      // Some messages were deleted successfully
+      return { success: true, message: 'Messages deleted successfully.' };
+    } else {
+      // No messages were deleted (IDs may not have matched any existing messages)
+      return { success: false, message: 'No messages deleted.' };
+    }
+  } catch (error) {
+    console.error('Error deleting messages:', error);
+    throw error;
+  }
+};
+
 module.exports = {
   registerToDatabase,
   findUserByEmailAndPassword,
@@ -199,4 +221,5 @@ module.exports = {
   sendMessage,
   getUserDetailsService,
   fetchChatsService,
+  deleteMessages
 };

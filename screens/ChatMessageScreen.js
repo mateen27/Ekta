@@ -23,6 +23,7 @@ import * as ImagePicker from "expo-image-picker";
 const ChatMessageScreen = () => {
   // state management
   const [showEmojiSelector, setShowEmojiSelector] = useState(false);
+  const [selectedMessages, setSelectedMessages] = useState([]);
   const [messageText, setMessageText] = useState("");
   const [selectedImage, setSelectedImage] = useState("");
   // for holding recepient Data from api call
@@ -186,55 +187,6 @@ const ChatMessageScreen = () => {
   }, [navigation, recepientData, loading]);
 
   // function to send message
-  // const handleSend = async (messageType, imageUri) => {
-  //   try {
-  //     const formData = new FormData();
-  //     // user id
-  //     formData.append("senderId", userId);
-  //     // recepient id
-  //     formData.append("recipientId", recepientId);
-
-  //     console.log("userId:", userId);
-  //     console.log("recipientId:", recepientId);
-  //     console.log("messageType:", messageType);
-
-  //     // if the message type id image or normal text
-  //     if (messageType === "image") {
-  //       formData.append("messageType", "image");
-  //       // Assuming 'imageUri' is the result from ImagePicker
-  //     const imageFile = {
-  //       uri: imageUri,
-  //       name: "image.jpg",
-  //       type: "image/jpeg",
-  //     };
-
-  //     formData.append("imageFile", imageFile.uri);
-  //     } else {
-  //       formData.append("messageType", "text");
-  //       formData.append("messageText", messageText);
-  //     }
-
-  //     const response = await fetch("http://192.168.29.181:5000/user/messages", {
-  //       method: "POST",
-  //       headers: {
-  //         "Content-Type": "multipart/form-data",
-  //       },
-  //       body: formData,
-  //     });
-
-  //     console.log("formData", formData);
-
-  //     if (response.ok) {
-  //       setMessageText("");
-  //       setSelectedImage("");
-
-  //       // call the api to fetch the messages from the backend
-  //       // fetchMessages();
-  //     }
-  //   } catch (error) {
-  //     console.log("error in sending the message!", error);
-  //   }
-  // };
   const handleSend = async (messageType, imageUri) => {
     try {
       const data = {
@@ -245,9 +197,9 @@ const ChatMessageScreen = () => {
         imageUrl: messageType === "image" ? imageUri : null,
       };
 
-      console.log("data", JSON.stringify(data));
+      // console.log("data", JSON.stringify(data));
 
-      //       console.log("userId:", userId);
+      // console.log("userId:", userId);
       // console.log("recipientId:", recepientId);
       // console.log("messageType:", messageType);
 
@@ -281,6 +233,28 @@ const ChatMessageScreen = () => {
     return new Date(time).toLocaleString("en-US", options);
   };
 
+  // function for handling selected messages!
+  const handleSelectedMessage = (message) => {
+    // check if the message is already selected!
+    const isSelected = selectedMessages.includes(message._id);
+
+    // will remove the already selected messages
+    if (isSelected) {
+      setSelectedMessages((previousMessages) =>
+        previousMessages.filter((id) => id !== message._id)
+      );
+    }
+    // append the selected messages to the existing messages
+    else {
+      setSelectedMessages((previousMessages) => [
+        ...previousMessages,
+        message._id,
+      ]);
+    }
+  };
+
+  console.log('messages', selectedMessages);
+
   return (
     <KeyboardAvoidingView style={styles.container}>
       <ScrollView>
@@ -291,6 +265,7 @@ const ChatMessageScreen = () => {
             return (
               <Pressable
                 key={index}
+                onLongPress={() => handleSelectedMessage(item)}
                 style={[
                   item?.senderId?._id === userId
                     ? styles.senderMessageStyle
@@ -327,7 +302,15 @@ const ChatMessageScreen = () => {
                     }
                   />
 
-                  <Text style={styles.timeTextStyle}>
+                  <Text
+                    style={{
+                      position: "absolute",
+                      color: "#333",
+                      fontSize: 11,
+                      right: 3,
+                      bottom: 0,
+                    }}
+                  >
                     {formatTime(item?.timeStamp)}
                   </Text>
                 </View>
@@ -440,14 +423,16 @@ const styles = StyleSheet.create({
     backgroundColor: "#39B68D",
     padding: 8,
     maxWidth: "70%",
-    borderRadius: 8,
+    borderRadius: 7,
     margin: 5,
+    marginHorizontal: 7,
   },
   receiverMessageStyle: {
     alignSelf: "flex-start",
     backgroundColor: "#39B68D",
     padding: 8,
     margin: 5,
+    marginHorizontal: 7,
     borderRadius: 7,
     maxWidth: "70%",
   },
@@ -458,11 +443,12 @@ const styles = StyleSheet.create({
   },
   timeTextStyle: {
     textAlign: "right",
-    fontSize: 11,
-    color: "black",
+    // position:'absolute' ,
+    fontSize: 10,
+    color: "#333",
     // position : 'absolute' ,
-    // right : 1 ,
-    // bottom : 1 ,
+    // right : 2 ,
+    // bottom : 3 ,
     // marginTop : 5
   },
   imageTimeStyle: {

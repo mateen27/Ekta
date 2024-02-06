@@ -43,6 +43,8 @@ app.use('/user' , userRoutes);
 app.use('/user' , userRoutes);
 // endpoint to fetch the messages between two users in the chatRoom!
 app.use('/user' , userRoutes);
+// endpoint to delete the messages between two users in the chatRoom
+app.use('/user' , userRoutes);
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {

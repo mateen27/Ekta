@@ -33,6 +33,8 @@ router.post('/messages' , sendMessage);
 router.get('/details/:userId' , getUserDetails);
 // endpoint to fetch the messages between two users in the chatRoom!
 router.get('/messages/:senderId/:recepientId' , fetchChats);
+// endpoint to delete Message from the chatRoom
+// router.post("/deleteMessages", deleteMessage);
 
 
 module.exports = router;

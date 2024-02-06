@@ -150,10 +150,11 @@ const showAllFriends = async (req, res) => {
 // function to send message to a person!
 const sendMessage = async (req, res) => {
   try {
-    const { senderId, recipientId, messageType, messageText, imageUrl } = req.body;
+    const { senderId, recipientId, messageType, messageText, imageUrl } =
+      req.body;
 
-    console.log('userID' , senderId);
-    console.log('recepientId', recipientId);
+    console.log("userID", senderId);
+    console.log("recepientId", recipientId);
     await userService.sendMessage(
       senderId,
       recipientId,
@@ -202,6 +203,28 @@ const fetchChats = async (req, res) => {
   }
 };
 
+// endpint to delete the messages between two users in the chatRoom
+const deleteMessage = async (req, res) => {
+  try {
+    const { messages } = req.body;
+
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return res
+        .status(400)
+        .json({ success: false, message: "No messages to delete!" });
+    }
+
+    const message = await userService.deleteMessages(messages);
+
+    if (message) {
+      res.json({ message: "Message deleted successfully!" });
+    }
+  } catch (error) {
+    console.error("Error Deleting Messages:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error." });
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
@@ -213,4 +236,5 @@ module.exports = {
   sendMessage,
   getUserDetails,
   fetchChats,
+  deleteMessage
 };
