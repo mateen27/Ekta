@@ -194,16 +194,49 @@ const deleteMessages = async (messages) => {
 
     if (result.deletedCount > 0) {
       // Some messages were deleted successfully
-      return { success: true, message: 'Messages deleted successfully.' };
+      return { success: true, message: "Messages deleted successfully." };
     } else {
       // No messages were deleted (IDs may not have matched any existing messages)
-      return { success: false, message: 'No messages deleted.' };
+      return { success: false, message: "No messages deleted." };
     }
   } catch (error) {
-    console.error('Error deleting messages:', error);
+    console.error("Error deleting messages:", error);
     throw error;
   }
 };
+
+// logic for getting the sent friend request of the current user
+const getSentFriendRequests = async (userID) => {
+  try {
+    const result = await User.findById(userID)
+      .populate("sentFriendRequests", "name email image")
+      .lean();
+
+    return result.sentFriendRequests;
+  } catch (error) {
+    console.error("Error fetching sent friend requests:", error);
+    throw error;
+  }
+};
+
+// logic for getting the friends of the current logged-in user
+const getFriendsList = async (userID) => {
+  try {
+    const user = await User.findById(userID).populate("friends");
+
+    // no user found
+    if (!user) {
+      throw new Error("User not found!!");
+    }
+
+    const friendIds = user.friends.map((friend) => friend._id);
+    return friendIds;
+  } catch (error) {
+    console.error("Error fetching friends list:", error);
+    throw error;
+  }
+};
+
 
 module.exports = {
   registerToDatabase,
@@ -218,5 +251,7 @@ module.exports = {
   sendMessage,
   getUserDetailsService,
   fetchChatsService,
-  deleteMessages
+  deleteMessages,
+  getSentFriendRequests,
+  getFriendsList
 };

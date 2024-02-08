@@ -9,7 +9,7 @@ import {
   Image,
   Pressable,
 } from "react-native";
-import React, { useContext, useEffect, useLayoutEffect, useState } from "react";
+import React, { useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 // icons
 import { Entypo } from "@expo/vector-icons";
 import { Feather } from "@expo/vector-icons";
@@ -41,7 +41,25 @@ const ChatMessageScreen = () => {
   // for accesing the user ID
   const { userId, setUserId } = useContext(UserType);
 
+  // useRoute
   const route = useRoute();
+
+  // useRef
+  const scrollViewRef = useRef(null);
+
+  const scrollToBottom = () => {
+    if (scrollViewRef.current) {
+      scrollViewRef.current.scrollToEnd({animated: false})
+    }
+  }
+
+  const handleContentSizeChange = () => {
+    scrollToBottom();
+  }
+
+  useEffect(() => {
+    scrollToBottom()
+  } , [])
 
   const { recepientId } = route.params;
 
@@ -311,7 +329,7 @@ const ChatMessageScreen = () => {
 
   return (
     <KeyboardAvoidingView style={styles.container}>
-      <ScrollView>
+      <ScrollView ref={scrollViewRef} contentContainerStyle= {{ flexGrow : 1}} onContentSizeChange={handleContentSizeChange}>
         {/* all the chats messages goes over here! */}
         {messages.map((item, index) => {
           // for the text

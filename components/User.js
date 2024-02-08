@@ -6,7 +6,7 @@ import {
   Image,
   TouchableOpacity,
 } from "react-native";
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { UserType } from "../context/userContext";
 
 const User = ({ item }) => {
@@ -15,6 +15,57 @@ const User = ({ item }) => {
 
   // state management
   const [requestSent, setRequestSent] = useState(false);
+  const [sentFriendRequests, setSentFriendRequests] = useState([]);
+  const [userFriends, setUserFriends] = useState([]);
+
+  // for fetching the sent friend requests
+  useEffect(() => {
+    const fetchFriendRequests = async () => {
+      try {
+        const response = await fetch(
+          `http://192.168.29.181:5000/user/friend-requests/sent/${userId}`
+        );
+
+        const data = await response.json();
+
+        if (response.ok) {
+          setSentFriendRequests(data);
+        } else {
+          console.log("error fetching friend requests", response.status);
+        }
+      } catch (error) {
+        console.log("error fetching FriendRequests!", error);
+      }
+    };
+
+    fetchFriendRequests();
+  }, []);
+
+  console.log("friend requests", sentFriendRequests);
+  console.log("user-friends" , userFriends);
+
+  // for fetching the friends of the current logged in users
+  useEffect(() => {
+    const fetchFriends = async () => {
+      try {
+        const response = await fetch(
+          `http://192.168.29.181:5000/user/friends/${userId}`
+        );
+
+        const data = await response.json();
+
+        if (response.ok) {
+          setUserFriends(data);
+        } else {
+          console.log("error fetching friends of the user", response.status);
+        }
+      } catch (error) {
+        console.log("error fetching friends of the user!", error);
+      }
+    };
+
+    fetchFriends();
+  }, []);
 
   // function for sending the friendRequests!
   const sendFriendRequest = async (currentUserId, selectedUserId) => {
@@ -54,12 +105,45 @@ const User = ({ item }) => {
       </View>
 
       {/* <TouchableOpacity for sending the FirendRequest! */}
-      <TouchableOpacity
-        style={styles.friendRequestButton}
-        onPress={() => sendFriendRequest(userId, item._id)}
-      >
-        <Text style={styles.buttonTextStyle}>Add Friend</Text>
-      </TouchableOpacity>
+      {userFriends.some((friend) => friend._id === item._id) ? (
+        <TouchableOpacity
+          style={{
+            backgroundColor: "#2d7e8f",
+            padding: 10,
+            width: 105,
+            borderRadius: 6,
+          }}
+        >
+          <Text style={{ textAlign: "center", color: "white" }}>Friends</Text>
+        </TouchableOpacity>
+      ) : requestSent || sentFriendRequests.some((friend) => friend._id === item._id) ? (
+        <TouchableOpacity
+          style={{
+            backgroundColor: "#333",
+            padding: 10,
+            width: 105,
+            borderRadius: 6,
+          }}
+        >
+          <Text style={{ textAlign: "center", color: "white", fontSize: 13 }}>
+            Request Sent
+          </Text>
+        </TouchableOpacity>
+      ) : (
+        <Pressable
+          onPress={() => sendFriendRequest(userId, item._id)}
+          style={{
+            backgroundColor: "#2d8f6f",
+            padding: 10,
+            borderRadius: 6,
+            width: 105,
+          }}
+        >
+          <Text style={{ textAlign: "center", color: "white", fontSize: 13 }}>
+            Add Friend
+          </Text>
+        </Pressable>
+      )}
     </Pressable>
   );
 };

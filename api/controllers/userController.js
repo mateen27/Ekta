@@ -225,6 +225,36 @@ const deleteMessage = async (req, res) => {
   }
 };
 
+// Endpoint to check the sentFriendsRequests
+const sentFriendRequestsHandler = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // checking if the user exists in the database
+    const sentRequests = await userService.getSentFriendRequests(userId);
+    
+    res.json(sentRequests);
+  } catch (error) {
+    console.error("Error fetching sent friend requests!:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error." });
+  }
+};
+
+// endpoint to check the friends of the particular user
+const friendsList = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // checking if the user exists in the database
+    const friendLists = await userService.getFriendsList(userId);
+    
+    res.json(friendLists);
+  } catch (error) {
+    console.error("Error fetching friends list of the particular user!:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error." });
+  }
+}
+
 module.exports = {
   registerUser,
   loginUser,
@@ -236,5 +266,7 @@ module.exports = {
   sendMessage,
   getUserDetails,
   fetchChats,
-  deleteMessage
+  deleteMessage,
+  sentFriendRequestsHandler,
+  friendsList
 };

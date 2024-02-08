@@ -45,6 +45,10 @@ app.use('/user' , userRoutes);
 app.use('/user' , userRoutes);
 // endpoint to delete the messages between two users in the chatRoom
 app.use('/user' , userRoutes);
+// endpoint to check for the sent friend-request of a particular user
+app.use('/user' , userRoutes);
+// endpoint to check the friends of a particular user
+app.use('/user' , userRoutes);
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
